@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ooredoo Contrat</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#e30613">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ooredoo Contrat">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f3f5f8;color:#1c2430}
+.box{max-width:520px;margin:40px auto;background:#fff;border-radius:14px;padding:28px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+h1{margin:0 0 4px;font-size:24px}.sub{margin:0 0 20px;color:#667}
+input{width:100%;padding:12px;border:1px solid #cfd6df;border-radius:10px;font-size:16px;margin-bottom:10px}
+button{padding:12px 16px;border:0;border-radius:10px;background:#1f6feb;color:#fff;font-size:16px;cursor:pointer}
+button:disabled{opacity:.6}.full{width:100%}.row{display:flex;gap:8px}.row input{margin:0}
+.err{color:#c62828;margin-top:8px;min-height:20px}.okmsg{color:#1e7e34}.hidden{display:none}
+.card{margin-top:18px;border:1px solid #e3e8ee;border-radius:12px;padding:16px}
+.badge{display:inline-block;padding:6px 12px;border-radius:20px;font-weight:600}
+.ok{background:#e6f4ea;color:#1e7e34}.wait{background:#fff4e0;color:#b26a00}.no{background:#eceff1;color:#455a64}
+.info{margin:10px 0 0;color:#445;line-height:1.6}.doc{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid #eef1f4}
+.doc span{word-break:break-all;font-size:14px}.doc button{padding:8px 12px;font-size:14px;white-space:nowrap}.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.doc .ml{background:#0f9d58}.choix{background:#f6f8fa;border-radius:10px;padding:10px;margin:4px 0 10px}.choix p{margin:4px 0 8px;font-size:14px;color:#445}.choix button{display:block;width:100%;margin-bottom:6px;font-size:15px;background:#fff;color:#1c2430;border:1px solid #cfd6df}.choix .note{font-size:12px;color:#778}
+.link{background:none;color:#1f6feb;padding:0;margin-top:20px;font-size:14px}
+</style></head><body>
+<div class="box" id="login">
+<h1>Ooredoo Contrat</h1><p class="sub">Suivi des contrats — accès en lecture</p>
+<input id="u" placeholder="Nom d'utilisateur" autocomplete="username">
+<input id="p" type="password" placeholder="Mot de passe" autocomplete="current-password">
+<button class="full" id="bl">Se connecter</button><div class="err" id="e1"></div>
+<button class="link" id="versInscr">Créer mon compte</button>
+</div>
+<div class="box hidden" id="inscr">
+<h1>Créer mon compte</h1><p class="sub">Choisissez votre nom d'utilisateur et votre mot de passe.</p>
+<input id="iu" placeholder="Nom d'utilisateur (3 à 30 caractères)" autocomplete="username">
+<input id="ip" type="password" placeholder="Mot de passe (8 caractères minimum)" autocomplete="new-password">
+<input id="ip2" type="password" placeholder="Confirmer le mot de passe" autocomplete="new-password">
+<button class="full" id="bi">Créer mon compte</button><div class="err" id="e3"></div>
+<button class="link" id="versLogin">J'ai déjà un compte</button>
+</div>
+<div class="box hidden" id="attente">
+<h1>Accès en attente</h1><p class="sub">Votre compte est créé. Pour voir les contrats, demandez l'accès puis entrez le code que l'administrateur vous donnera.</p>
+<button class="full" id="bd">Demander l'accès</button><div class="err" id="e4"></div>
+<input id="ca" placeholder="Code d'accès reçu" style="margin-top:14px">
+<button class="full" id="bv">Valider le code</button><div class="err" id="e5"></div>
+<button class="link" onclick="location.reload()">Se déconnecter</button>
+</div>
+<div class="box hidden" id="app">
+<h1>Ooredoo Contrat</h1><p class="sub">Tapez un code site ou un numéro de contrat</p>
+<div class="row"><input id="c" placeholder="Ex : TE6203"><button id="bc">Chercher</button></div>
+<div class="err" id="e2"></div><div id="res"></div>
+<button class="link" onclick="location.reload()">Se déconnecter</button>
+</div>
+<script>
+var API='https://automations.gh-soft.net/webhook/noteur-directeur-api';
+var U='',P='',CODE='',DOCS=[],ROLE='lecture';
+function $(i){return document.getElementById(i)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return c=='&'?'&amp;':c=='<'?'&lt;':c=='>'?'&gt;':'&quot;'})}
+function appel(d,blob){var f=new URLSearchParams();f.append('user',U);f.append('pass',P);for(var k in d)f.append(k,d[k]);
+ return fetch(API,{method:'POST',body:f}).then(function(r){if(r.status==401)throw new Error('acces');if(r.status==403)return r.json().catch(function(){return{}}).then(function(j){var e=new Error('attente');e.info=j;throw e});if(!r.ok)throw new Error('serveur');return blob?r.blob():r.json()})}
+function connexion(){U=$('u').value.trim();P=$('p').value;$('e1').className='err';$('e1').textContent='';$('bl').disabled=true;
+ appel({action:'login'}).then(function(r){ROLE=(r&&r.role)||'lecture';voir('app');$('c').focus()})
+ .catch(function(e){if(e.message=='attente'){voir('attente');return}$('e1').textContent=e.message=='acces'?'Nom d\'utilisateur ou mot de passe incorrect.':'Serveur injoignable, réessayez.'})
+ .finally(function(){$('bl').disabled=false})}
+function chercher(){var c=$('c').value.trim();if(!c)return;$('e2').textContent='';$('res').innerHTML='';$('bc').disabled=true;
+ appel({action:'chercher',code:c}).then(afficher).catch(function(){$('e2').textContent='Erreur, réessayez.'}).finally(function(){$('bc').disabled=false})}
+function afficher(r){CODE=r.code;DOCS=r.docs||[];var h='<div class="card">';
+ if(r.statut=='recupere')h+='<span class="badge ok">✅ Récupéré</span>';
+ else if(r.statut=='attente')h+='<span class="badge wait">⏳ Pas encore récupéré</span>';
+ else h+='<span class="badge no">❌ Pas encore enregistré</span>';
+ h+='<p class="info"><b>Code site :</b> '+esc(r.code);
+ if(r.numero)h+='<br><b>N° contrat :</b> '+esc(r.numero);
+ if(r.nom)h+='<br><b>Nom :</b> '+esc(r.nom);
+ if(r.date)h+='<br><b>Date :</b> '+esc(r.date);
+ h+='</p>';
+ if(r.statut=='recupere'&&ROLE=='lecture')h+='<p class="info" style="color:#778">Votre accès permet de voir l\'état des contrats seulement.</p>';
+ if(r.statut=='recupere'&&ROLE!='lecture'){h+='<p class="info"><b>Documents ('+DOCS.length+')</b></p>';
+  if(!DOCS.length)h+='<p class="info">Aucun document enregistré.</p>';
+  DOCS.forEach(function(d,i){h+='<div class="doc"><span>'+esc(d.nom)+'</span><div class="acts"><button class="dl" data-i="'+i+'">Télécharger</button><button class="ml" data-i="'+i+'">Envoyer par mail</button></div></div>'})}
+ h+='</div>';$('res').innerHTML=h;
+ Array.prototype.forEach.call(document.querySelectorAll('.doc .dl'),function(b){b.onclick=function(){telecharger(b)}});
+ Array.prototype.forEach.call(document.querySelectorAll('.doc .ml'),function(b){b.onclick=function(){parMail(b)}})}
+function typeDe(n){n=n.toLowerCase();return /\.pdf$/.test(n)?'application/pdf':/\.png$/.test(n)?'image/png':/\.jpe?g$/.test(n)?'image/jpeg':'application/octet-stream'}
+function corps(d){return 'Bonjour,\n\nVeuillez trouver ci-joint le document '+d.nom+' (contrat '+CODE+').\n\nCordialement'}
+function telechargerFichier(d){var a=document.createElement('a');a.href=URL.createObjectURL(d.file);a.download=d.nom;document.body.appendChild(a);a.click();a.remove()}
+function parMail(b){var i=+b.getAttribute('data-i'),d=DOCS[i];var box=$('mail'+i);
+ if(box){box.remove();return}
+ b.disabled=true;b.textContent='Préparation…';
+ var pret=d.file?Promise.resolve():appel({action:'doc',code:CODE,fileId:d.id},true).then(function(blob){try{d.file=new File([blob],d.nom,{type:typeDe(d.nom)})}catch(e){d.file=blob}});
+ pret.then(function(){b.textContent='Envoyer par mail';
+  var x=document.createElement('div');x.id='mail'+i;x.className='choix';
+  var peutPartager=navigator.canShare&&d.file instanceof File&&navigator.canShare({files:[d.file]});
+  x.innerHTML='<p>Envoyer avec :</p>'+(peutPartager?'<button data-m="partage">📱 Application du téléphone (pièce jointe incluse)</button>':'')+
+   '<button data-m="gmail">Gmail</button><button data-m="outlook">Outlook</button><button data-m="ooredoo">Mail Ooredoo (pro)</button><button data-m="autre">Autre application mail</button>'+
+   '<p class="note">Pour Gmail, Outlook et Ooredoo, le fichier est téléchargé : ajoutez-le en pièce jointe.</p>';
+  b.closest('.doc').after(x);
+  Array.prototype.forEach.call(x.querySelectorAll('button'),function(c){c.onclick=function(){envoyer(c.getAttribute('data-m'),d)}})})
+ .catch(function(){b.textContent='Erreur'}).finally(function(){b.disabled=false})}
+function envoyer(m,d){var s=encodeURIComponent('Contrat '+CODE+' — '+d.nom),c=encodeURIComponent(corps(d));
+ if(m=='partage'){navigator.share({files:[d.file],title:'Contrat '+CODE,text:corps(d)}).catch(function(){});return}
+ var url=m=='gmail'?'https://mail.google.com/mail/?view=cm&fs=1&su='+s+'&body='+c
+  :m=='outlook'?'https://outlook.live.com/mail/0/deeplink/compose?subject='+s+'&body='+c
+  :m=='ooredoo'?'https://outlook.office.com/mail/deeplink/compose?subject='+s+'&body='+c
+  :'mailto:?subject='+s+'&body='+c;
+ if(m=='autre'){telechargerFichier(d);setTimeout(function(){window.location.href=url},700);return}
+ window.open(url,'_blank');telechargerFichier(d)}
+function telecharger(b){var d=DOCS[+b.getAttribute('data-i')];b.disabled=true;b.textContent='…';
+ appel({action:'doc',code:CODE,fileId:d.id},true).then(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=d.nom;document.body.appendChild(a);a.click();a.remove();b.textContent='Télécharger'})
+ .catch(function(){b.textContent='Erreur'}).finally(function(){b.disabled=false})}
+function voir(id){['login','inscr','attente','app'].forEach(function(x){$(x).classList.toggle('hidden',x!=id)})}
+function inscription(){var u=$('iu').value.trim(),p=$('ip').value;$('e3').textContent='';
+ if(!/^[A-Za-z0-9._-]{3,30}$/.test(u)){$('e3').textContent='Nom d\'utilisateur : 3 à 30 lettres ou chiffres, sans espace.';return}
+ if(p.length<8){$('e3').textContent='Le mot de passe doit avoir au moins 8 caractères.';return}
+ if(p!==$('ip2').value){$('e3').textContent='Les deux mots de passe ne sont pas identiques.';return}
+ $('bi').disabled=true;var f=new URLSearchParams();f.append('action','inscription');f.append('user',u);f.append('pass',p);
+ fetch(API,{method:'POST',body:f}).then(function(r){return r.json().catch(function(){return{ok:false}})}).then(function(r){
+  if(r.ok){U=u;P=p;voir('attente')}else $('e3').textContent=r.erreur||'Erreur, réessayez.'})
+ .catch(function(){$('e3').textContent='Serveur injoignable, réessayez.'}).finally(function(){$('bi').disabled=false})}
+function demander(){$('e4').className='err';$('e4').textContent='';$('bd').disabled=true;
+ appel({action:'demande'}).then(function(){$('e4').className='err okmsg';$('e4').textContent='Demande envoyée. Entrez ci-dessous le code reçu de l\'administrateur.'})
+ .catch(function(){$('e4').textContent='Erreur, réessayez.'}).finally(function(){$('bd').disabled=false})}
+function valider(){var c=$('ca').value.trim();if(!c)return;$('e5').textContent='';$('bv').disabled=true;
+ appel({action:'activer',codeAcces:c}).then(function(r){ROLE=(r&&r.role)||'lecture';voir('app');$('c').focus()})
+ .catch(function(e){$('e5').textContent=(e.info&&e.info.erreur)||'Code incorrect.'}).finally(function(){$('bv').disabled=false})}
+$('bd').onclick=demander;$('bv').onclick=valider;
+$('versInscr').onclick=function(){voir('inscr')};$('versLogin').onclick=function(){voir('login')};$('bi').onclick=inscription;
+$('bl').onclick=connexion;$('p').onkeydown=function(e){if(e.key=='Enter')connexion()};
+$('bc').onclick=chercher;$('c').onkeydown=function(e){if(e.key=='Enter')chercher()};
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){})}
+</script></body></html>
