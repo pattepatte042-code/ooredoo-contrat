@@ -1,4 +1,415 @@
-<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ooredoo Contrat</title>
-<meta http-equiv="refresh" content="0; url=https://ooredoo-contrat.github.io/ooredoo-contrat/">
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(r){r.forEach(function(x){x.unregister()})})}location.replace('https://ooredoo-contrat.github.io/ooredoo-contrat/')</script>
-</head><body><p>Nouvelle adresse : <a href="https://ooredoo-contrat.github.io/ooredoo-contrat/">ooredoo-contrat.github.io/ooredoo-contrat</a></p></body></html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ooredoo Contrat — Tableau de bord</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #e11d48;
+      --primary-hover: #be123c;
+      --secondary: #0f172a;
+      --secondary-hover: #1e293b;
+      --blue: #2563eb;
+      --ok-bg: #dcfce7;
+      --ok-text: #166534;
+      --wait-bg: #fef3c7;
+      --wait-text: #92400e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .hero-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.5rem;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .search-row input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .search-row input:focus {
+      border-color: var(--blue);
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.15s ease;
+    }
+
+    .btn-blue {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-scan {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-scan:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-status {
+      background: var(--secondary);
+      color: #fff;
+    }
+
+    .btn-status:hover {
+      background: var(--secondary-hover);
+    }
+
+    .dashboard-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .tab {
+      background: #f1f5f9;
+      color: var(--text);
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .tab.active {
+      background: var(--secondary);
+      color: #fff;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stat-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .badge-ok {
+      background: var(--ok-bg);
+      color: var(--ok-text);
+    }
+
+    .badge-wait {
+      background: var(--wait-bg);
+      color: var(--wait-text);
+    }
+
+    .status-msg {
+      color: var(--muted);
+      padding: 16px 0;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 680px) {
+      .actions-row, .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero-card">
+      <div class="hero-top">
+        <div>
+          <h1>Ooredoo Contrat</h1>
+          <p class="subtitle">Accès total — recherchez un contrat, scannez ou consultez l'état des contrats</p>
+        </div>
+      </div>
+
+      <div class="search-row">
+        <input id="searchInput" type="text" placeholder="Ex : TE6203 ou numéro de contrat">
+        <button class="btn btn-blue" type="button" onclick="filtrerTableau()">Chercher</button>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-scan" type="button" onclick="scannerContrat()">
+          📷 Scanner un contrat
+        </button>
+        <button class="btn btn-status" type="button" onclick="chargerEtatContrats()">
+          📊 État des contrats
+        </button>
+      </div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="tabs">
+        <button class="tab active" data-tab="all" onclick="changerOnglet('all', this)">Tous</button>
+        <button class="tab" data-tab="recovered" onclick="changerOnglet('recovered', this)">Récupérés</button>
+        <button class="tab" data-tab="pending" onclick="changerOnglet('pending', this)">En attente</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-label">Total contrats</div>
+          <div class="stat-value" id="countAll">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Récupérés</div>
+          <div class="stat-value" id="countRecovered">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">En attente</div>
+          <div class="stat-value" id="countPending">0</div>
+        </div>
+      </div>
+
+      <div id="statusMsg" class="status-msg">Cliquez sur « État des contrats » pour charger les données depuis n8n.</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code / Contrat</th>
+              <th>Statut</th>
+              <th>Détails / Lien</th>
+            </tr>
+          </thead>
+          <tbody id="contractsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WEBHOOK_URL = "https://automations.gh-soft.net/webhook/VOTRE_CHEMIN_WEBHOOK";
+    const SCAN_URL = "https://ooredoo-contrat.github.io/ooredoo-contrat/";
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function (regs) {
+        regs.forEach(function (reg) { reg.unregister(); });
+      });
+    }
+
+    let contratsData = [];
+    let ongletActif = "all";
+
+    function scannerContrat() {
+      window.open(SCAN_URL, "_blank", "noopener");
+    }
+
+    function normaliserStatut(val) {
+      const s = String(val || "").toLowerCase();
+      if (s.includes("recup") || s.includes("récup") || s.includes("ok") || s.includes("done") || s.includes("archiv")) {
+        return "recovered";
+      }
+      return "pending";
+    }
+
+    async function chargerEtatContrats() {
+      const statusMsg = document.getElementById("statusMsg");
+      statusMsg.textContent = "Chargement de l'état des contrats...";
+
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "etat_contrats" })
+        });
+
+        if (!res.ok) {
+          throw new Error("Erreur HTTP " + res.status);
+        }
+
+        const raw = await res.json();
+        const liste = Array.isArray(raw)
+          ? raw
+          : (raw.contrats || raw.items || raw.data || []);
+
+        contratsData = liste.map((item) => {
+          const code = item.contrat || item.code || item.site || item.id || item.name || "Sans référence";
+          const statut = normaliserStatut(item.statut || item.status || item.etat);
+          const info = item.details || item.fichier || item.url || item.lien || "";
+          return { code, statut, info };
+        });
+
+        mettreAJourCompteurs();
+        rendreTableau();
+        statusMsg.textContent = contratsData.length
+          ? "Données synchronisées (" + contratsData.length + " éléments)."
+          : "Aucun contrat retourné par le workflow.";
+      } catch (err) {
+        statusMsg.textContent = "Impossible de charger les données : " + err.message;
+      }
+    }
+
+    function mettreAJourCompteurs() {
+      const rec = contratsData.filter((c) => c.statut === "recovered").length;
+      const pen = contratsData.filter((c) => c.statut === "pending").length;
+      document.getElementById("countAll").textContent = contratsData.length;
+      document.getElementById("countRecovered").textContent = rec;
+      document.getElementById("countPending").textContent = pen;
+    }
+
+    function changerOnglet(tab, el) {
+      ongletActif = tab;
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      el.classList.add("active");
+      rendreTableau();
+    }
+
+    function filtrerTableau() {
+      rendreTableau();
+    }
+
+    function rendreTableau() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      const tbody = document.getElementById("contractsBody");
+
+      const filtres = contratsData.filter((c) => {
+        const matchTab = ongletActif === "all" || c.statut === ongletActif;
+        const matchQuery = !q ||
+          String(c.code).toLowerCase().includes(q) ||
+          String(c.info).toLowerCase().includes(q);
+        return matchTab && matchQuery;
+      });
+
+      tbody.innerHTML = filtres.map((c) => {
+        const isRec = c.statut === "recovered";
+        const badge = isRec
+          ? '<span class="badge badge-ok">Récupéré</span>'
+          : '<span class="badge badge-wait">En attente</span>';
+
+        const lien = /^https?:\/\//i.test(c.info)
+          ? '<a href="' + c.info + '" target="_blank" rel="noopener">Ouvrir</a>'
+          : (c.info || "-");
+
+        return "<tr><td><strong>" + c.code + "</strong></td><td>" + badge + "</td><td>" + lien + "</td></tr>";
+      }).join("");
+    }
+  </script>
+</body>
+</html>
